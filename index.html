@@ -1,100 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NASCAR Fantasy League</title>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script crossorigin
+    src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // Lucide React icons as inline SVG components
-    const Calendar = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-    );
+    // ==================== CONFIGURATION ====================
+    // IMPORTANT: Replace with your Google Apps Script Web App URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw1w6CuHehwbnLKqB8tYh1dc8NUVrCoMAG-jzLhRadyyXmyYHvh-wuT4gZ4zQOp18rf/exec';
+    const PASSCODE = 'spider2ybanana!'; // Must match the passcode in Code.gs
 
-    const Trophy = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-        <path d="M4 22h16"></path>
-        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-      </svg>
-    );
+    // Constants
+    const TRACK_TYPES = ['Superspeedway', 'Intermediate', 'Short Track', 'Road Course'];
 
-    const TrendingUp = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-        <polyline points="17 6 23 6 23 12"></polyline>
-      </svg>
-    );
+    const DEFAULT_2026_SCHEDULE = [
+      { id: 1, name: 'Daytona 500', date: '2026-02-16', time: '2:30 PM ET', track: 'Daytona', type: 'Superspeedway' },
+      { id: 2, name: 'Atlanta', date: '2026-02-23', time: '3:00 PM ET', track: 'Atlanta', type: 'Intermediate' },
+      { id: 3, name: 'Las Vegas', date: '2026-03-02', time: '3:30 PM ET', track: 'Las Vegas', type: 'Intermediate' },
+      { id: 4, name: 'Phoenix', date: '2026-03-09', time: '3:30 PM ET', track: 'Phoenix', type: 'Short Track' },
+      { id: 5, name: 'Bristol', date: '2026-03-16', time: '7:00 PM ET', track: 'Bristol', type: 'Short Track' },
+      { id: 6, name: 'COTA', date: '2026-03-23', time: '3:30 PM ET', track: 'COTA', type: 'Road Course' },
+      { id: 7, name: 'Richmond', date: '2026-03-30', time: '7:00 PM ET', track: 'Richmond', type: 'Short Track' },
+      { id: 8, name: 'Martinsville', date: '2026-04-06', time: '7:00 PM ET', track: 'Martinsville', type: 'Short Track' },
+      { id: 9, name: 'Texas', date: '2026-04-13', time: '3:30 PM ET', track: 'Texas', type: 'Intermediate' },
+      { id: 10, name: 'Talladega', date: '2026-04-27', time: '3:00 PM ET', track: 'Talladega', type: 'Superspeedway' }
+    ];
 
-    const Users = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    );
+    // Consolidated Icons
+    const Icons = {
+      Calendar: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      ),
+      Trophy: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+          <path d="M4 22h16"></path>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+        </svg>
+      ),
+      TrendingUp: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          <polyline points="17 6 23 6 23 12"></polyline>
+        </svg>
+      ),
+      Users: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      ),
+      Plus: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      ),
+      Upload: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      ),
+      Save: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+      ),
+      X: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      ),
+      ChevronDown: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      ),
+      ChevronUp: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      ),
+      Lock: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      )
+    };
 
-    const Plus = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    );
+    // ==================== API CLIENT ====================
 
-    const Upload = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-      </svg>
-    );
+    const api = {
+      async callGet(action) {
+        try {
+          const url = `${API_URL}?action=${action}&passcode=${encodeURIComponent(PASSCODE)}`;
+          const response = await fetch(url);
+          const data = await response.json();
 
-    const Save = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-        <polyline points="7 3 7 8 15 8"></polyline>
-      </svg>
-    );
+          if (data.error) {
+            throw new Error(data.error);
+          }
 
-    const X = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    );
+          return data;
+        } catch (error) {
+          console.error('API GET Error:', error);
+          throw error;
+        }
+      },
 
-    const ChevronDown = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
-    );
+      async callPost(action, payload = {}) {
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, passcode: PASSCODE, ...payload })
+          });
 
-    const ChevronUp = ({ size = 24 }) => (
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="18 15 12 9 6 15"></polyline>
-      </svg>
-    );
+          const data = await response.json();
+
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          return data;
+        } catch (error) {
+          console.error('API POST Error:', error);
+          throw error;
+        }
+      }
+    };
+
+    // Utility Functions
+    const getStatusClassName = (status) => {
+      if (status.startsWith('Error')) return 'bg-red-100 text-red-800';
+      if (status.startsWith('Success')) return 'bg-green-100 text-green-800';
+      return 'bg-blue-100 text-blue-800';
+    };
+
+    const processCSV = async (file, requiredColumns, processor) => {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+
+      if (lines.length < 2) {
+        throw new Error('CSV file appears empty');
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+      // Validate required columns
+      for (const col of requiredColumns) {
+        if (!headers.includes(col)) {
+          throw new Error(`CSV must have "${col}" column`);
+        }
+      }
+
+      return processor(lines, headers);
+    };
+
+    // ==================== LOGIN COMPONENT ====================
+
+    const LoginScreen = ({ onLogin }) => {
+      const [inputPasscode, setInputPasscode] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (inputPasscode === PASSCODE) {
+          onLogin();
+        } else {
+          setError('Invalid passcode');
+          setInputPasscode('');
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <div className="flex justify-center mb-6">
+              <Icons.Lock size={48} className="text-blue-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-center mb-2">NASCAR Fantasy League</h1>
+            <p className="text-gray-600 text-center mb-6">Enter passcode to continue</p>
+
+            <form onSubmit={handleSubmit}>
+              <input
+                type="password"
+                value={inputPasscode}
+                onChange={(e) => { setInputPasscode(e.target.value); setError(''); }}
+                placeholder="Enter passcode"
+                className="w-full border-2 rounded px-4 py-3 mb-4 text-lg focus:outline-none focus:border-blue-600"
+                autoFocus
+              />
+
+              {error && (
+                <div className="bg-red-100 text-red-800 p-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 rounded font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Sign In
+              </button>
+            </form>
+
+            <p className="text-sm text-gray-500 text-center mt-6">
+              Powered by Google Apps Script
+            </p>
+          </div>
+        </div>
+      );
+    };
+
+    // ==================== MAIN APP COMPONENT ====================
 
     const NASCARFantasyApp = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
       const [activeTab, setActiveTab] = useState('schedule');
       const [users, setUsers] = useState([]);
       const [activDrivers, setActiveDrivers] = useState([]);
@@ -105,80 +257,92 @@
       const [historicalData, setHistoricalData] = useState([]);
       const [selectedRace, setSelectedRace] = useState(null);
       const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+      const [connectionStatus, setConnectionStatus] = useState('connected');
 
-      // Load data from localStorage on mount
+      // Load data from backend on mount
       useEffect(() => {
-        loadData();
-      }, []);
+        if (isAuthenticated) {
+          loadData();
+        }
+      }, [isAuthenticated]);
 
-      const loadData = () => {
+      const loadData = async () => {
         try {
-          const usersData = localStorage.getItem('users');
-          const driversData = localStorage.getItem('activeDrivers');
-          const racesData = localStorage.getItem('races');
-          const picksData = localStorage.getItem('picks');
-          const resultsData = localStorage.getItem('raceResults');
-          const bonusData = localStorage.getItem('bonusPoints');
-          const histData = localStorage.getItem('historicalData');
+          setLoading(true);
+          setConnectionStatus('loading');
+          const data = await api.callGet('getAllData');
 
-          if (usersData) setUsers(JSON.parse(usersData));
-          if (driversData) setActiveDrivers(JSON.parse(driversData));
-          if (racesData) setRaces(JSON.parse(racesData));
-          if (picksData) setPicks(JSON.parse(picksData));
-          if (resultsData) setRaceResults(JSON.parse(resultsData));
-          if (bonusData) setBonusPoints(JSON.parse(bonusData));
-          if (histData) setHistoricalData(JSON.parse(histData));
+          setUsers(data.users || []);
+          setActiveDrivers(data.activeDrivers || []);
+          setRaces(data.races || []);
+          setPicks(data.picks || {});
+          setRaceResults(data.raceResults || {});
+          setBonusPoints(data.bonusPoints || {});
+          setHistoricalData(data.historicalData || []);
+          setConnectionStatus('connected');
         } catch (err) {
           console.error('Error loading data:', err);
+          setConnectionStatus('error');
+          alert('Failed to load data from server: ' + err.message);
         } finally {
           setLoading(false);
         }
       };
 
-      const saveData = () => {
+      const saveData = async () => {
         try {
-          localStorage.setItem('users', JSON.stringify(users));
-          localStorage.setItem('activeDrivers', JSON.stringify(activDrivers));
-          localStorage.setItem('races', JSON.stringify(races));
-          localStorage.setItem('picks', JSON.stringify(picks));
-          localStorage.setItem('raceResults', JSON.stringify(raceResults));
-          localStorage.setItem('bonusPoints', JSON.stringify(bonusPoints));
-          localStorage.setItem('historicalData', JSON.stringify(historicalData));
+          setSaving(true);
+          await api.callPost('saveAll', {
+            races,
+            picks,
+            raceResults,
+            bonusPoints,
+            historicalData
+          });
           alert('Data saved successfully!');
         } catch (err) {
           console.error('Error saving data:', err);
-          alert('Error saving data');
+          alert('Error saving data: ' + err.message);
+        } finally {
+          setSaving(false);
         }
       };
 
-      // Initialize with 2026 NASCAR schedule
+      // Initialize with default schedule if empty
       useEffect(() => {
-        if (races.length === 0 && !loading) {
-          const schedule2026 = [
-            { id: 1, name: 'Daytona 500', date: '2026-02-16', time: '2:30 PM ET', track: 'Daytona', type: 'Superspeedway' },
-            { id: 2, name: 'Atlanta', date: '2026-02-23', time: '3:00 PM ET', track: 'Atlanta', type: 'Intermediate' },
-            { id: 3, name: 'Las Vegas', date: '2026-03-02', time: '3:30 PM ET', track: 'Las Vegas', type: 'Intermediate' },
-            { id: 4, name: 'Phoenix', date: '2026-03-09', time: '3:30 PM ET', track: 'Phoenix', type: 'Short Track' },
-            { id: 5, name: 'Bristol', date: '2026-03-16', time: '7:00 PM ET', track: 'Bristol', type: 'Short Track' },
-            { id: 6, name: 'COTA', date: '2026-03-23', time: '3:30 PM ET', track: 'COTA', type: 'Road Course' },
-            { id: 7, name: 'Richmond', date: '2026-03-30', time: '7:00 PM ET', track: 'Richmond', type: 'Short Track' },
-            { id: 8, name: 'Martinsville', date: '2026-04-06', time: '7:00 PM ET', track: 'Martinsville', type: 'Short Track' },
-            { id: 9, name: 'Texas', date: '2026-04-13', time: '3:30 PM ET', track: 'Texas', type: 'Intermediate' },
-            { id: 10, name: 'Talladega', date: '2026-04-27', time: '3:00 PM ET', track: 'Talladega', type: 'Superspeedway' }
-          ];
-          setRaces(schedule2026);
+        if (races.length === 0 && !loading && isAuthenticated) {
+          setRaces(DEFAULT_2026_SCHEDULE);
         }
-      }, [loading]);
+      }, [loading, isAuthenticated]);
+
+      if (!isAuthenticated) {
+        return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+      }
+
+      if (loading) {
+        return (
+          <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mb-4"></div>
+            <p className="text-gray-600">Loading league data...</p>
+          </div>
+        );
+      }
 
       const SchedulePage = () => (
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">2026 Race Schedule</h2>
-            <button onClick={saveData} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-              <Save size={18} /> Save All Data
+            <button
+              onClick={saveData}
+              disabled={saving}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              <Icons.Save size={18} />
+              {saving ? 'Saving...' : 'Save All Data'}
             </button>
           </div>
-          
+
           <div className="grid gap-4">
             {races.map(race => (
               <div key={race.id} className="bg-white border rounded-lg p-4 hover:shadow-lg transition-shadow">
@@ -188,7 +352,7 @@
                     <p className="text-gray-600">{new Date(race.date).toLocaleDateString()}{race.time && ` • ${race.time}`}</p>
                     <p className="text-sm text-gray-500">{race.track} • {race.type}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => { setSelectedRace(race); setActiveTab('race-detail'); }}
                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
                   >
@@ -220,7 +384,7 @@
           const newPicks = { ...picks };
           if (!newPicks[raceKey]) newPicks[raceKey] = {};
           if (!newPicks[raceKey][userId]) newPicks[raceKey][userId] = ['', '', ''];
-          
+
           newPicks[raceKey][userId][driverIndex] = driverName;
           setPicks(newPicks);
           setUserPicks(newPicks[raceKey]);
@@ -269,7 +433,7 @@
                     {[0, 1, 2].map(i => (
                       <div key={i}>
                         <label className="block text-sm font-medium mb-1">Driver {i + 1}</label>
-                        <select 
+                        <select
                           value={userPicks[user]?.[i] || ''}
                           onChange={(e) => updatePicks(user, i, e.target.value)}
                           className="w-full border rounded px-3 py-2"
@@ -294,7 +458,7 @@
                 {activDrivers.map(driver => (
                   <div key={driver} className="flex items-center gap-2">
                     <label className="flex-1">{driver}</label>
-                    <input 
+                    <input
                       type="number"
                       placeholder="Points"
                       value={driverScores[driver] || ''}
@@ -312,7 +476,7 @@
                 {users.map(user => (
                   <div key={user} className="flex items-center gap-2">
                     <label className="flex-1">{user}</label>
-                    <input 
+                    <input
                       type="number"
                       placeholder="Bonus"
                       value={userBonuses[user] || ''}
@@ -330,7 +494,7 @@
       const LeaderboardPage = () => {
         const calculateStandings = () => {
           const standings = {};
-          
+
           users.forEach(user => {
             let totalPoints = 0;
             races.forEach(race => {
@@ -338,13 +502,13 @@
               const userPicksForRace = picks[raceKey]?.[user] || [];
               const resultsForRace = raceResults[raceKey] || {};
               const bonusForRace = bonusPoints[raceKey]?.[user] || 0;
-              
-              const racePoints = userPicksForRace.reduce((sum, driver) => 
+
+              const racePoints = userPicksForRace.reduce((sum, driver) =>
                 sum + (resultsForRace[driver] || 0), 0);
-              
+
               totalPoints += racePoints + bonusForRace;
             });
-            
+
             standings[user] = totalPoints;
           });
 
@@ -358,7 +522,7 @@
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Season Leaderboard</h2>
-            
+
             <div className="bg-white rounded-lg border overflow-hidden">
               <table className="w-full">
                 <thead className="bg-gray-100">
@@ -388,13 +552,8 @@
           const userPerf = {};
           const driverPerf = {};
 
-          users.forEach(user => {
-            userPerf[user] = {};
-          });
-
-          activDrivers.forEach(driver => {
-            driverPerf[driver] = {};
-          });
+          users.forEach(user => { userPerf[user] = {}; });
+          activDrivers.forEach(driver => { driverPerf[driver] = {}; });
 
           races.forEach(race => {
             const raceKey = `race_${race.id}`;
@@ -402,9 +561,9 @@
 
             users.forEach(user => {
               const userPicksForRace = picks[raceKey]?.[user] || [];
-              const points = userPicksForRace.reduce((sum, driver) => 
+              const points = userPicksForRace.reduce((sum, driver) =>
                 sum + (resultsForRace[driver] || 0), 0);
-              
+
               if (!userPerf[user][race.type]) userPerf[user][race.type] = { points: 0, races: 0 };
               userPerf[user][race.type].points += points;
               userPerf[user][race.type].races += 1;
@@ -450,7 +609,6 @@
 
         const { userPerf, driverPerf } = getTrackTypePerformance();
         const { perfByTrack, perfByTrackType } = getHistoricalDriverPerformance();
-        const trackTypes = ['Superspeedway', 'Intermediate', 'Short Track', 'Road Course'];
         const [showHistorical, setShowHistorical] = useState(false);
         const [selectedDriver, setSelectedDriver] = useState(null);
 
@@ -465,7 +623,7 @@
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-2 text-left">User</th>
-                      {trackTypes.map(type => (
+                      {TRACK_TYPES.map(type => (
                         <th key={type} className="px-4 py-2 text-right">{type}</th>
                       ))}
                     </tr>
@@ -474,7 +632,7 @@
                     {users.map((user, i) => (
                       <tr key={user} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-4 py-2 font-semibold">{user}</td>
-                        {trackTypes.map(type => {
+                        {TRACK_TYPES.map(type => {
                           const data = userPerf[user][type];
                           const avg = data ? (data.points / data.races).toFixed(1) : '0.0';
                           return <td key={type} className="px-4 py-2 text-right">{avg}</td>;
@@ -493,7 +651,7 @@
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-2 text-left">Driver</th>
-                      {trackTypes.map(type => (
+                      {TRACK_TYPES.map(type => (
                         <th key={type} className="px-4 py-2 text-right">{type}</th>
                       ))}
                     </tr>
@@ -502,7 +660,7 @@
                     {activDrivers.map((driver, i) => (
                       <tr key={driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-4 py-2 font-semibold">{driver}</td>
-                        {trackTypes.map(type => {
+                        {TRACK_TYPES.map(type => {
                           const data = driverPerf[driver][type];
                           const avg = data ? (data.points / data.races).toFixed(1) : '0.0';
                           return <td key={type} className="px-4 py-2 text-right">{avg}</td>;
@@ -519,11 +677,11 @@
                 <div className="bg-white rounded-lg p-6 border">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-semibold">Historical Driver Performance</h3>
-                    <button 
+                    <button
                       onClick={() => setShowHistorical(!showHistorical)}
                       className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
                     >
-                      {showHistorical ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      {showHistorical ? <Icons.ChevronUp size={20} /> : <Icons.ChevronDown size={20} />}
                       {showHistorical ? 'Hide' : 'Show'} Historical Data
                     </button>
                   </div>
@@ -532,7 +690,7 @@
                     <div className="space-y-4">
                       <div>
                         <label className="block font-medium mb-2">Select Driver for Details:</label>
-                        <select 
+                        <select
                           value={selectedDriver || ''}
                           onChange={(e) => setSelectedDriver(e.target.value)}
                           className="border rounded px-3 py-2 w-64"
@@ -548,7 +706,7 @@
                         <div>
                           <h4 className="font-semibold mb-2">Historical Avg by Track Type - {selectedDriver}</h4>
                           <div className="grid grid-cols-4 gap-4">
-                            {trackTypes.map(type => {
+                            {TRACK_TYPES.map(type => {
                               const data = perfByTrackType[selectedDriver][type];
                               const avg = data ? (data.points / data.races).toFixed(1) : 'N/A';
                               const races = data ? data.races : 0;
@@ -595,26 +753,46 @@
         const [uploadStatus, setUploadStatus] = useState('');
         const [scheduleUploadStatus, setScheduleUploadStatus] = useState('');
 
-        const addUser = () => {
-          if (newUser && !users.includes(newUser)) {
+        const addUser = async () => {
+          if (!newUser || users.includes(newUser)) return;
+
+          try {
+            await api.callPost('addUser', { userName: newUser });
             setUsers([...users, newUser]);
             setNewUser('');
+          } catch (err) {
+            alert('Error adding user: ' + err.message);
           }
         };
 
-        const removeUser = (user) => {
-          setUsers(users.filter(u => u !== user));
+        const removeUser = async (user) => {
+          try {
+            await api.callPost('removeUser', { userName: user });
+            setUsers(users.filter(u => u !== user));
+          } catch (err) {
+            alert('Error removing user: ' + err.message);
+          }
         };
 
-        const addDriver = () => {
-          if (newDriver && !activDrivers.includes(newDriver)) {
+        const addDriver = async () => {
+          if (!newDriver || activDrivers.includes(newDriver)) return;
+
+          try {
+            await api.callPost('addDriver', { driverName: newDriver });
             setActiveDrivers([...activDrivers, newDriver].sort());
             setNewDriver('');
+          } catch (err) {
+            alert('Error adding driver: ' + err.message);
           }
         };
 
-        const removeDriver = (driver) => {
-          setActiveDrivers(activDrivers.filter(d => d !== driver));
+        const removeDriver = async (driver) => {
+          try {
+            await api.callPost('removeDriver', { driverName: driver });
+            setActiveDrivers(activDrivers.filter(d => d !== driver));
+          } catch (err) {
+            alert('Error removing driver: ' + err.message);
+          }
         };
 
         const handleScheduleCSVUpload = async (e) => {
@@ -624,52 +802,32 @@
           setScheduleUploadStatus('Processing...');
 
           try {
-            const text = await file.text();
-            const lines = text.split('\n').filter(line => line.trim());
-            
-            if (lines.length < 2) {
-              setScheduleUploadStatus('Error: CSV file appears empty');
-              return;
-            }
+            const newSchedule = await processCSV(file, ['name', 'date', 'track', 'type'], (lines, headers) => {
+              const idIdx = headers.indexOf('id');
+              const nameIdx = headers.indexOf('name');
+              const dateIdx = headers.indexOf('date');
+              const timeIdx = headers.indexOf('time');
+              const trackIdx = headers.indexOf('track');
+              const typeIdx = headers.indexOf('type');
 
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            
-            const idIdx = headers.indexOf('id');
-            const nameIdx = headers.indexOf('name');
-            const dateIdx = headers.indexOf('date');
-            const timeIdx = headers.indexOf('time');
-            const trackIdx = headers.indexOf('track');
-            const typeIdx = headers.indexOf('type');
+              const schedule = [];
+              for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                schedule.push({
+                  id: idIdx !== -1 && cols[idIdx] ? parseInt(cols[idIdx]) : i,
+                  name: cols[nameIdx],
+                  date: cols[dateIdx],
+                  time: timeIdx !== -1 ? cols[timeIdx] : '',
+                  track: cols[trackIdx],
+                  type: cols[typeIdx]
+                });
+              }
+              return schedule;
+            });
 
-            if (nameIdx === -1 || dateIdx === -1 || trackIdx === -1 || typeIdx === -1) {
-              setScheduleUploadStatus('Error: CSV must have "name", "date", "track", and "type" columns');
-              return;
-            }
-
-            const newSchedule = [];
-
-            for (let i = 1; i < lines.length; i++) {
-              const cols = lines[i].split(',').map(c => c.trim());
-              
-              const race = {
-                id: idIdx !== -1 && cols[idIdx] ? parseInt(cols[idIdx]) : i,
-                name: cols[nameIdx],
-                date: cols[dateIdx],
-                time: timeIdx !== -1 ? cols[timeIdx] : '',
-                track: cols[trackIdx],
-                type: cols[typeIdx]
-              };
-
-              newSchedule.push(race);
-            }
-
+            await api.callPost('saveRaces', { races: newSchedule });
             setRaces(newSchedule);
             setScheduleUploadStatus(`Success! Imported ${newSchedule.length} races`);
-            
-            setTimeout(() => {
-              saveData();
-            }, 100);
-
           } catch (err) {
             setScheduleUploadStatus(`Error: ${err.message}`);
           }
@@ -682,63 +840,47 @@
           setUploadStatus('Processing...');
 
           try {
-            const text = await file.text();
-            const lines = text.split('\n').filter(line => line.trim());
-            
-            if (lines.length < 2) {
-              setUploadStatus('Error: CSV file appears empty');
-              return;
-            }
+            const result = await processCSV(file, ['driver', 'points'], (lines, headers) => {
+              const yearIdx = headers.indexOf('year');
+              const raceIdx = headers.indexOf('race');
+              const trackIdx = headers.indexOf('track');
+              const trackTypeIdx = headers.indexOf('tracktype');
+              const driverIdx = headers.indexOf('driver');
+              const pointsIdx = headers.indexOf('points');
+              const userIdx = headers.indexOf('user');
 
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            
-            const yearIdx = headers.indexOf('year');
-            const raceIdx = headers.indexOf('race');
-            const trackIdx = headers.indexOf('track');
-            const trackTypeIdx = headers.indexOf('tracktype');
-            const driverIdx = headers.indexOf('driver');
-            const pointsIdx = headers.indexOf('points');
-            const userIdx = headers.indexOf('user');
+              const newHistoricalData = [];
+              let imported = 0;
+              let filtered = 0;
 
-            if (driverIdx === -1 || pointsIdx === -1) {
-              setUploadStatus('Error: CSV must have "driver" and "points" columns');
-              return;
-            }
+              for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                const driver = cols[driverIdx];
 
-            const newHistoricalData = [];
-            let imported = 0;
-            let filtered = 0;
+                if (!activDrivers.includes(driver)) {
+                  filtered++;
+                  continue;
+                }
 
-            for (let i = 1; i < lines.length; i++) {
-              const cols = lines[i].split(',').map(c => c.trim());
-              const driver = cols[driverIdx];
-              
-              if (!activDrivers.includes(driver)) {
-                filtered++;
-                continue;
+                newHistoricalData.push({
+                  year: yearIdx !== -1 ? cols[yearIdx] : '',
+                  race: raceIdx !== -1 ? cols[raceIdx] : '',
+                  track: trackIdx !== -1 ? cols[trackIdx] : '',
+                  trackType: trackTypeIdx !== -1 ? cols[trackTypeIdx] : '',
+                  driver: driver,
+                  points: parseFloat(cols[pointsIdx]) || 0,
+                  user: userIdx !== -1 ? cols[userIdx] : ''
+                });
+                imported++;
               }
 
-              const record = {
-                year: yearIdx !== -1 ? cols[yearIdx] : '',
-                race: raceIdx !== -1 ? cols[raceIdx] : '',
-                track: trackIdx !== -1 ? cols[trackIdx] : '',
-                trackType: trackTypeIdx !== -1 ? cols[trackTypeIdx] : '',
-                driver: driver,
-                points: parseFloat(cols[pointsIdx]) || 0,
-                user: userIdx !== -1 ? cols[userIdx] : ''
-              };
+              return { newHistoricalData, imported, filtered };
+            });
 
-              newHistoricalData.push(record);
-              imported++;
-            }
-
-            setHistoricalData(prev => [...prev, ...newHistoricalData]);
-            setUploadStatus(`Success! Imported ${imported} records, filtered out ${filtered} inactive drivers`);
-            
-            setTimeout(() => {
-              saveData();
-            }, 100);
-
+            const updatedHistoricalData = [...historicalData, ...result.newHistoricalData];
+            await api.callPost('saveHistoricalData', { historicalData: updatedHistoricalData });
+            setHistoricalData(updatedHistoricalData);
+            setUploadStatus(`Success! Imported ${result.imported} records, filtered out ${result.filtered} inactive drivers`);
           } catch (err) {
             setUploadStatus(`Error: ${err.message}`);
           }
@@ -753,14 +895,14 @@
               <p className="text-sm text-gray-600 mb-4">
                 Upload a CSV file with the race schedule. Required columns: name, date, track, type. Optional: id, time
               </p>
-              
+
               <div className="mb-4">
                 <label className="block mb-2">
                   <span className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 cursor-pointer inline-flex items-center gap-2">
-                    <Upload size={20} />
+                    <Icons.Upload size={20} />
                     Choose Schedule CSV
                   </span>
-                  <input 
+                  <input
                     type="file"
                     accept=".csv"
                     onChange={handleScheduleCSVUpload}
@@ -770,7 +912,7 @@
               </div>
 
               {scheduleUploadStatus && (
-                <div className={`p-3 rounded ${scheduleUploadStatus.startsWith('Error') ? 'bg-red-100 text-red-800' : scheduleUploadStatus.startsWith('Success') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                <div className={`p-3 rounded ${getStatusClassName(scheduleUploadStatus)}`}>
                   {scheduleUploadStatus}
                 </div>
               )}
@@ -785,7 +927,7 @@
             <div className="bg-white rounded-lg p-6 border">
               <h3 className="text-xl font-semibold mb-4">Users</h3>
               <div className="flex gap-2 mb-4">
-                <input 
+                <input
                   type="text"
                   value={newUser}
                   onChange={(e) => setNewUser(e.target.value)}
@@ -794,7 +936,7 @@
                   className="flex-1 border rounded px-3 py-2"
                 />
                 <button onClick={addUser} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                  <Plus size={20} />
+                  <Icons.Plus size={20} />
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -802,7 +944,7 @@
                   <div key={user} className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded">
                     <span>{user}</span>
                     <button onClick={() => removeUser(user)} className="text-red-600 hover:text-red-800">
-                      <X size={16} />
+                      <Icons.X size={16} />
                     </button>
                   </div>
                 ))}
@@ -812,7 +954,7 @@
             <div className="bg-white rounded-lg p-6 border">
               <h3 className="text-xl font-semibold mb-4">Active Drivers</h3>
               <div className="flex gap-2 mb-4">
-                <input 
+                <input
                   type="text"
                   value={newDriver}
                   onChange={(e) => setNewDriver(e.target.value)}
@@ -821,7 +963,7 @@
                   className="flex-1 border rounded px-3 py-2"
                 />
                 <button onClick={addDriver} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                  <Plus size={20} />
+                  <Icons.Plus size={20} />
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -829,7 +971,7 @@
                   <div key={driver} className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded">
                     <span className="flex-1">{driver}</span>
                     <button onClick={() => removeDriver(driver)} className="text-red-600 hover:text-red-800">
-                      <X size={16} />
+                      <Icons.X size={16} />
                     </button>
                   </div>
                 ))}
@@ -842,14 +984,14 @@
                 Upload a CSV file with your historical race data. The file should include columns: year, race, track, tracktype, driver, points, user (optional).
                 Only drivers in your active driver list will be imported.
               </p>
-              
+
               <div className="mb-4">
                 <label className="block mb-2">
                   <span className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer inline-flex items-center gap-2">
-                    <Upload size={20} />
+                    <Icons.Upload size={20} />
                     Choose CSV File
                   </span>
-                  <input 
+                  <input
                     type="file"
                     accept=".csv"
                     onChange={handleCSVUpload}
@@ -859,7 +1001,7 @@
               </div>
 
               {uploadStatus && (
-                <div className={`p-3 rounded ${uploadStatus.startsWith('Error') ? 'bg-red-100 text-red-800' : uploadStatus.startsWith('Success') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                <div className={`p-3 rounded ${getStatusClassName(uploadStatus)}`}>
                   {uploadStatus}
                 </div>
               )}
@@ -867,9 +1009,10 @@
               {historicalData.length > 0 && (
                 <div className="mt-4">
                   <p className="font-semibold">Total historical records: {historicalData.length}</p>
-                  <button 
-                    onClick={() => {
+                  <button
+                    onClick={async () => {
                       if (confirm('Are you sure you want to clear all historical data?')) {
+                        await api.callPost('saveHistoricalData', { historicalData: [] });
                         setHistoricalData([]);
                         setUploadStatus('Historical data cleared');
                       }
@@ -885,30 +1028,38 @@
         );
       };
 
-      if (loading) {
-        return <div className="flex items-center justify-center h-screen">Loading...</div>;
-      }
-
       return (
         <div className="min-h-screen bg-gray-100">
           <div className="bg-blue-700 text-white p-4 shadow-lg">
-            <h1 className="text-3xl font-bold">NASCAR Fantasy League</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold">NASCAR Fantasy League</h1>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm px-2 py-1 rounded ${connectionStatus === 'connected' ? 'bg-green-500' :
+                    connectionStatus === 'loading' ? 'bg-yellow-500' :
+                      'bg-red-500'
+                  }`}>
+                  {connectionStatus === 'connected' ? '● Online' :
+                    connectionStatus === 'loading' ? '● Loading...' :
+                      '● Error'}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div className="flex">
             <nav className="w-64 bg-white shadow-lg min-h-screen p-4">
               <div className="space-y-2">
                 <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'schedule' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
-                  <Calendar size={20} /> Schedule
+                  <Icons.Calendar size={20} /> Schedule
                 </button>
                 <button onClick={() => setActiveTab('leaderboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'leaderboard' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
-                  <Trophy size={20} /> Leaderboard
+                  <Icons.Trophy size={20} /> Leaderboard
                 </button>
                 <button onClick={() => setActiveTab('insights')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'insights' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
-                  <TrendingUp size={20} /> Insights
+                  <Icons.TrendingUp size={20} /> Insights
                 </button>
                 <button onClick={() => setActiveTab('setup')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'setup' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
-                  <Users size={20} /> Setup
+                  <Icons.Users size={20} /> Setup
                 </button>
               </div>
             </nav>
@@ -928,4 +1079,5 @@
     ReactDOM.render(<NASCARFantasyApp />, document.getElementById('root'));
   </script>
 </body>
+
 </html>
