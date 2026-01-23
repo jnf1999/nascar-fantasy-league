@@ -645,7 +645,7 @@
             </div>
 
             <div className="bg-white rounded-lg p-6 border">
-              <h3 className="text-xl font-semibold mb-4">Driver Performance by Track Type</h3>
+              <h3 className="text-xl font-semibold mb-4">Driver Performance by Track Type (2026)</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-100">
@@ -671,6 +671,64 @@
                 </table>
               </div>
             </div>
+
+            {historicalData.length > 0 && (
+              <div className="bg-white rounded-lg p-6 border">
+                <h3 className="text-xl font-semibold mb-4">Driver Performance by Track Type (Historical)</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Driver</th>
+                        {TRACK_TYPES.map(type => (
+                          <th key={type} className="px-4 py-2 text-right">{type}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activDrivers.map((driver, i) => {
+                        const hasData = perfByTrackType[driver];
+                        if (!hasData) return null;
+                        return (
+                          <tr key={driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="px-4 py-2 font-semibold">{driver}</td>
+                            {TRACK_TYPES.map(type => {
+                              const typeData = perfByTrackType[driver]?.[type];
+                              if (!typeData) {
+                                return <td key={type} className="px-4 py-2 text-right text-gray-400">-</td>;
+                              }
+                              
+                              // Calculate average
+                              const avg = (typeData.points / typeData.races).toFixed(1);
+                              
+                              // Calculate median - get all points for this driver/track type
+                              const allPoints = historicalData
+                                .filter(r => r.driver === driver && r.trackType === type)
+                                .map(r => r.points)
+                                .sort((a, b) => a - b);
+                              
+                              let median = 0;
+                              if (allPoints.length > 0) {
+                                const mid = Math.floor(allPoints.length / 2);
+                                median = allPoints.length % 2 === 0
+                                  ? ((allPoints[mid - 1] + allPoints[mid]) / 2)
+                                  : allPoints[mid];
+                              }
+                              
+                              return (
+                                <td key={type} className="px-4 py-2 text-right">
+                                  {avg} <span className="text-xs text-gray-500">({median.toFixed(1)})</span>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {historicalData.length > 0 && (
               <>
