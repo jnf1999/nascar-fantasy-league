@@ -612,6 +612,14 @@
         const [showHistorical, setShowHistorical] = useState(false);
         const [selectedDriver, setSelectedDriver] = useState(null);
 
+        // Extract unique track types from historical data
+        const historicalTrackTypes = [...new Set(historicalData.map(r => r.trackType))].filter(Boolean).sort();
+        
+        // Extract unique track types from current 2026 races
+        // If no races, fallback to default TRACK_TYPES to show structure
+        const currentDataTrackTypes = [...new Set(races.map(r => r.type))].filter(Boolean).sort();
+        const currentTrackTypes = currentDataTrackTypes.length > 0 ? currentDataTrackTypes : TRACK_TYPES;
+
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Advanced Insights</h2>
@@ -623,7 +631,7 @@
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-2 text-left">User</th>
-                      {TRACK_TYPES.map(type => (
+                      {currentTrackTypes.map(type => (
                         <th key={type} className="px-4 py-2 text-right">{type}</th>
                       ))}
                     </tr>
@@ -632,7 +640,7 @@
                     {users.map((user, i) => (
                       <tr key={user} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-4 py-2 font-semibold">{user}</td>
-                        {TRACK_TYPES.map(type => {
+                        {currentTrackTypes.map(type => {
                           const data = userPerf[user][type];
                           const avg = data ? (data.points / data.races).toFixed(1) : '0.0';
                           return <td key={type} className="px-4 py-2 text-right">{avg}</td>;
@@ -651,7 +659,7 @@
                   <thead className="bg-gray-100">
                     <tr>
                       <th className="px-4 py-2 text-left">Driver</th>
-                      {TRACK_TYPES.map(type => (
+                      {currentTrackTypes.map(type => (
                         <th key={type} className="px-4 py-2 text-right">{type}</th>
                       ))}
                     </tr>
@@ -660,7 +668,7 @@
                     {activDrivers.map((driver, i) => (
                       <tr key={driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className="px-4 py-2 font-semibold">{driver}</td>
-                        {TRACK_TYPES.map(type => {
+                        {currentTrackTypes.map(type => {
                           const data = driverPerf[driver][type];
                           const avg = data ? (data.points / data.races).toFixed(1) : '0.0';
                           return <td key={type} className="px-4 py-2 text-right">{avg}</td>;
@@ -680,7 +688,7 @@
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-4 py-2 text-left">Driver</th>
-                        {TRACK_TYPES.map(type => (
+                        {historicalTrackTypes.map(type => (
                           <th key={type} className="px-4 py-2 text-right">{type}</th>
                         ))}
                       </tr>
@@ -689,7 +697,7 @@
                       {activDrivers.map((driver, i) => (
                         <tr key={driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                           <td className="px-4 py-2 font-semibold">{driver}</td>
-                          {TRACK_TYPES.map(type => {
+                          {historicalTrackTypes.map(type => {
                             const typeData = perfByTrackType[driver]?.[type];
                             if (!typeData) {
                               return <td key={type} className="px-4 py-2 text-right text-gray-400">-</td>;
@@ -760,7 +768,7 @@
                         <div>
                           <h4 className="font-semibold mb-2">Historical Avg by Track Type - {selectedDriver}</h4>
                           <div className="grid grid-cols-4 gap-4">
-                            {TRACK_TYPES.map(type => {
+                            {historicalTrackTypes.map(type => {
                               const data = perfByTrackType[selectedDriver][type];
                               const avg = data ? (data.points / data.races).toFixed(1) : 'N/A';
                               const races = data ? data.races : 0;
