@@ -272,6 +272,10 @@
           setLoading(true);
           setConnectionStatus('loading');
           const data = await api.callGet('getAllData');
+          
+          console.log('API Response:', data); // Debugging
+          console.log('Historical Data Sample:', data.historicalData?.[0]); // Debugging
+          console.log('First record keys:', data.historicalData?.[0] ? Object.keys(data.historicalData[0]) : 'No data');
 
           setUsers(data.users || []);
           setActiveDrivers(data.activeDrivers || []);
