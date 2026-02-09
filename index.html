@@ -114,6 +114,13 @@
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
+      ),
+      Map: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
       )
     };
 
@@ -272,7 +279,7 @@
           setLoading(true);
           setConnectionStatus('loading');
           const data = await api.callGet('getAllData');
-          
+
           console.log('API Response:', data); // Debugging
           console.log('Historical Data Sample:', data.historicalData?.[0]); // Debugging
 
@@ -628,7 +635,7 @@
 
         // Extract unique track types from historical data
         const historicalTrackTypes = [...new Set(historicalData.map(r => r.trackType))].filter(Boolean).sort();
-        
+
         // Extract unique track types from current 2026 races
         // If no races, fallback to default TRACK_TYPES to show structure
         const currentDataTrackTypes = [...new Set(races.map(r => r.type))].filter(Boolean).sort();
@@ -716,16 +723,16 @@
                             if (!typeData) {
                               return <td key={type} className="px-4 py-2 text-right text-gray-400">-</td>;
                             }
-                            
+
                             // Calculate average
                             const avg = (typeData.points / typeData.races).toFixed(1);
-                            
+
                             // Calculate median - get all points for this driver/track type
                             const allPoints = historicalData
                               .filter(r => r.driver === driver && r.trackType === type)
                               .map(r => r.points)
                               .sort((a, b) => a - b);
-                            
+
                             let median = 0;
                             if (allPoints.length > 0) {
                               const mid = Math.floor(allPoints.length / 2);
@@ -733,7 +740,7 @@
                                 ? ((allPoints[mid - 1] + allPoints[mid]) / 2)
                                 : allPoints[mid];
                             }
-                            
+
                             return (
                               <td key={type} className="px-4 py-2 text-right">
                                 {avg} <span className="text-xs text-gray-500">({median.toFixed(1)})</span>
@@ -1104,6 +1111,107 @@
         );
       };
 
+      const TracksPage = () => {
+        const [selectedTrack, setSelectedTrack] = useState('');
+
+        // Get unique tracks from historical data
+        const uniqueTracks = [...new Set(historicalData.map(r => r.track))].filter(Boolean).sort();
+
+        const getDriverStatsByTrack = (track) => {
+          if (!track) return [];
+
+          const driverStats = {};
+
+          // Filter historical data for selected track
+          historicalData
+            .filter(r => r.track === track)
+            .forEach(record => {
+              if (!driverStats[record.driver]) {
+                driverStats[record.driver] = [];
+              }
+              driverStats[record.driver].push(record.points);
+            });
+
+          // Calculate average and median for each driver
+          const stats = Object.entries(driverStats).map(([driver, points]) => {
+            const sortedPoints = [...points].sort((a, b) => a - b);
+            const avg = points.reduce((sum, p) => sum + p, 0) / points.length;
+
+            let median;
+            const mid = Math.floor(sortedPoints.length / 2);
+            median = sortedPoints.length % 2 === 0
+              ? (sortedPoints[mid - 1] + sortedPoints[mid]) / 2
+              : sortedPoints[mid];
+
+            return {
+              driver,
+              average: avg,
+              median: median,
+              races: points.length
+            };
+          });
+
+          // Sort by average descending
+          return stats.sort((a, b) => b.average - a.average);
+        };
+
+        const stats = getDriverStatsByTrack(selectedTrack);
+
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Track Performance</h2>
+
+            <div className="bg-white rounded-lg p-6 border">
+              <label className="block font-medium mb-2">Select Track:</label>
+              <select
+                value={selectedTrack}
+                onChange={(e) => setSelectedTrack(e.target.value)}
+                className="border rounded px-4 py-2 w-full max-w-md"
+              >
+                <option value="">Choose a track...</option>
+                {uniqueTracks.map(track => (
+                  <option key={track} value={track}>{track}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedTrack && stats.length > 0 && (
+              <div className="bg-white rounded-lg border overflow-hidden">
+                <h3 className="text-xl font-semibold p-6 pb-4">Driver Performance at {selectedTrack}</h3>
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-6 py-3 text-left">Rank</th>
+                      <th className="px-6 py-3 text-left">Driver</th>
+                      <th className="px-6 py-3 text-right">Average Points</th>
+                      <th className="px-6 py-3 text-right">Median Points</th>
+                      <th className="px-6 py-3 text-right">Races</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.map((stat, i) => (
+                      <tr key={stat.driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-6 py-4 font-bold text-lg">{i + 1}</td>
+                        <td className="px-6 py-4 font-semibold">{stat.driver}</td>
+                        <td className="px-6 py-4 text-right font-semibold">{stat.average.toFixed(1)}</td>
+                        <td className="px-6 py-4 text-right">{stat.median.toFixed(1)}</td>
+                        <td className="px-6 py-4 text-right text-gray-600">{stat.races}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {selectedTrack && stats.length === 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <p className="text-yellow-800">No historical data available for {selectedTrack}</p>
+              </div>
+            )}
+          </div>
+        );
+      };
+
       return (
         <div className="min-h-screen bg-gray-100">
           <div className="bg-blue-700 text-white p-4 shadow-lg">
@@ -1111,8 +1219,8 @@
               <h1 className="text-3xl font-bold">NASCAR Fantasy League</h1>
               <div className="flex items-center gap-2">
                 <span className={`text-sm px-2 py-1 rounded ${connectionStatus === 'connected' ? 'bg-green-500' :
-                    connectionStatus === 'loading' ? 'bg-yellow-500' :
-                      'bg-red-500'
+                  connectionStatus === 'loading' ? 'bg-yellow-500' :
+                    'bg-red-500'
                   }`}>
                   {connectionStatus === 'connected' ? '● Online' :
                     connectionStatus === 'loading' ? '● Loading...' :
@@ -1134,6 +1242,9 @@
                 <button onClick={() => setActiveTab('insights')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'insights' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
                   <Icons.TrendingUp size={20} /> Insights
                 </button>
+                <button onClick={() => setActiveTab('tracks')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'tracks' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                  <Icons.Map size={20} /> Tracks
+                </button>
                 <button onClick={() => setActiveTab('setup')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'setup' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
                   <Icons.Users size={20} /> Setup
                 </button>
@@ -1145,6 +1256,7 @@
               {activeTab === 'race-detail' && <RaceDetailPage />}
               {activeTab === 'leaderboard' && <LeaderboardPage />}
               {activeTab === 'insights' && <InsightsPage />}
+              {activeTab === 'tracks' && <TracksPage />}
               {activeTab === 'setup' && <SetupPage />}
             </main>
           </div>
