@@ -121,6 +121,13 @@
           <line x1="8" y1="2" x2="8" y2="18"></line>
           <line x1="16" y1="6" x2="16" y2="22"></line>
         </svg>
+      ),
+      Menu: ({ size = 24 }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
       )
     };
 
@@ -266,6 +273,7 @@
       const [loading, setLoading] = useState(true);
       const [saving, setSaving] = useState(false);
       const [connectionStatus, setConnectionStatus] = useState('connected');
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
       // Load data from backend on mount
       useEffect(() => {
@@ -548,17 +556,17 @@
               <table className="w-full">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left">Position</th>
-                    <th className="px-6 py-3 text-left">User</th>
-                    <th className="px-6 py-3 text-right">Total Points</th>
+                    <th className="px-3 md:px-6 py-3 text-left text-sm md:text-base">Position</th>
+                    <th className="px-3 md:px-6 py-3 text-left text-sm md:text-base">User</th>
+                    <th className="px-3 md:px-6 py-3 text-right text-sm md:text-base">Total Points</th>
                   </tr>
                 </thead>
                 <tbody>
                   {standings.map((s, i) => (
                     <tr key={s.user} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-6 py-4 font-bold text-lg">{s.position}</td>
-                      <td className="px-6 py-4 font-semibold">{s.user}</td>
-                      <td className="px-6 py-4 text-right font-semibold">{s.points.toFixed(1)}</td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 font-bold text-base md:text-lg">{s.position}</td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base">{s.user}</td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-right font-semibold text-sm md:text-base">{s.points.toFixed(1)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1181,21 +1189,21 @@
                 <table className="w-full">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-3 text-left">Rank</th>
-                      <th className="px-6 py-3 text-left">Driver</th>
-                      <th className="px-6 py-3 text-right">Average Points</th>
-                      <th className="px-6 py-3 text-right">Median Points</th>
-                      <th className="px-6 py-3 text-right">Races</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-base">Rank</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-base">Driver</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-base">Avg Pts</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-base">Med Pts</th>
+                      <th className="px-3 md:px-6 py-2 md:py-3 text-right text-xs md:text-base">Races</th>
                     </tr>
                   </thead>
                   <tbody>
                     {stats.map((stat, i) => (
                       <tr key={stat.driver} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 font-bold text-lg">{i + 1}</td>
-                        <td className="px-6 py-4 font-semibold">{stat.driver}</td>
-                        <td className="px-6 py-4 text-right font-semibold">{stat.average.toFixed(1)}</td>
-                        <td className="px-6 py-4 text-right">{stat.median.toFixed(1)}</td>
-                        <td className="px-6 py-4 text-right text-gray-600">{stat.races}</td>
+                        <td className="px-3 md:px-6 py-3 md:py-4 font-bold text-base md:text-lg">{i + 1}</td>
+                        <td className="px-3 md:px-6 py-3 md:py-4 font-semibold text-sm md:text-base">{stat.driver}</td>
+                        <td className="px-3 md:px-6 py-3 md:py-4 text-right font-semibold text-sm md:text-base">{stat.average.toFixed(1)}</td>
+                        <td className="px-3 md:px-6 py-3 md:py-4 text-right text-sm md:text-base">{stat.median.toFixed(1)}</td>
+                        <td className="px-3 md:px-6 py-3 md:py-4 text-right text-gray-600 text-sm md:text-base">{stat.races}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1216,9 +1224,9 @@
         <div className="min-h-screen bg-gray-100">
           <div className="bg-blue-700 text-white p-4 shadow-lg">
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold">NASCAR Fantasy League</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">NASCAR Fantasy League</h1>
               <div className="flex items-center gap-2">
-                <span className={`text-sm px-2 py-1 rounded ${connectionStatus === 'connected' ? 'bg-green-500' :
+                <span className={`text-xs md:text-sm px-2 py-1 rounded ${connectionStatus === 'connected' ? 'bg-green-500' :
                   connectionStatus === 'loading' ? 'bg-yellow-500' :
                     'bg-red-500'
                   }`}>
@@ -1226,12 +1234,19 @@
                     connectionStatus === 'loading' ? '● Loading...' :
                       '● Error'}
                 </span>
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 hover:bg-blue-600 rounded"
+                >
+                  <Icons.Menu size={24} />
+                </button>
               </div>
             </div>
           </div>
 
           <div className="flex">
-            <nav className="w-64 bg-white shadow-lg min-h-screen p-4">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:block w-64 bg-white shadow-lg min-h-screen p-4">
               <div className="space-y-2">
                 <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'schedule' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
                   <Icons.Calendar size={20} /> Schedule
@@ -1251,7 +1266,38 @@
               </div>
             </nav>
 
-            <main className="flex-1 p-8">
+            {/* Mobile Navigation */}
+            {mobileMenuOpen && (
+              <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setMobileMenuOpen(false)}>
+                <nav className="bg-white w-64 h-full shadow-lg p-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold">Menu</h2>
+                    <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-gray-100 rounded">
+                      <Icons.X size={20} />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <button onClick={() => { setActiveTab('schedule'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'schedule' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                      <Icons.Calendar size={20} /> Schedule
+                    </button>
+                    <button onClick={() => { setActiveTab('leaderboard'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'leaderboard' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                      <Icons.Trophy size={20} /> Leaderboard
+                    </button>
+                    <button onClick={() => { setActiveTab('insights'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'insights' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                      <Icons.TrendingUp size={20} /> Insights
+                    </button>
+                    <button onClick={() => { setActiveTab('tracks'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'tracks' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                      <Icons.Map size={20} /> Tracks
+                    </button>
+                    <button onClick={() => { setActiveTab('setup'); setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded ${activeTab === 'setup' ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}`}>
+                      <Icons.Users size={20} /> Setup
+                    </button>
+                  </div>
+                </nav>
+              </div>
+            )}
+
+            <main className="flex-1 p-4 md:p-8">
               {activeTab === 'schedule' && <SchedulePage />}
               {activeTab === 'race-detail' && <RaceDetailPage />}
               {activeTab === 'leaderboard' && <LeaderboardPage />}
